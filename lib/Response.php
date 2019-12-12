@@ -7,9 +7,8 @@
 class Response {
 
   public $result = 'ok';
-  public $payload = [];
-  public $message = 'Everything is fine';
   private $content_type = 'application/json';
+	private $content = '';
 
   public function setStatus(string $result) {
     $this->result = $result;
@@ -33,11 +32,11 @@ class Response {
   }
 
   public function toJson() {
-    return json_encode($this);
+    return $this->toJson();
   }
 
   public function dispatch() {
-    $content = $this->toJson();
+    $content = json_encode($this->content, JSON_PRETTY_PRINT);
 
     header('Content-type: ' . $this->content_type);
     header('Content-Length: ' . strlen($content));
@@ -47,28 +46,22 @@ class Response {
 	public function setup(Context $ctx) {
 		// Collect output buffer from Context to
 		// convert it to an actual HTTP response
-		$output = $ctx->getContent();
+		$content = $ctx->getContent();
 
 		// Override response type and data if set with Context
-		if (!empty($output['content_type'])) {
+		if (isset($content['content_type'])) {
 			$this->setContentType($output['content_type']);
 		}
 
-		if (!empty($output['message'])) {
-			$this->setMessage($output['message']);
+		// Override result code from the component called
+		if (isset($content['result'])) {
+			$this->result = $content['result'];
 		}
 
-		if (!empty($output['result'])) {
-			$this->setStatus($output['result']);
-		}
+		// Append result code to the component's output
+		$content['result'] = $this->result;
 
-		// Whenever there is no overriden payload,
-		// use output object directly
-		if (!empty($output['payload'])) {
-			$this->setPayload($output['payload']);
-		} else {
-			$this->setPayload($output);
-		}
+		$this->content = $content;
 	}
   
 }
