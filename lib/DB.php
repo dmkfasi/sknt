@@ -42,4 +42,10 @@ class DB extends PDO {
 
 		return $sth->fetchAll(PDO::FETCH_ASSOC);
   }
+
+  public function getResult(string $sql, array $params = []) {
+    $sth = $this->runQuery($sql, $params);
+
+		return $sth->fetch(PDO::FETCH_ASSOC);
+  }
 }
